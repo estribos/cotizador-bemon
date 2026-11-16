@@ -39,6 +39,24 @@ def verificar_password():
 if not verificar_password():
     st.stop()
 
+# --- INICIALIZACIÓN DE ESTADOS GLOBAL DE LA SESIÓN ---
+if "num_cotizacion_num" not in st.session_state:
+    st.session_state.num_cotizacion_num = 175
+
+if "partidas" not in st.session_state:
+    st.session_state.partidas = [{"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 10.0, "gancho": 5.0, "piezas": 100, "precio_kg": 26.00}]
+
+# --- FUNCIÓN PARA LIMPIAR PANTALLA E INCREMENTAR FOLIO AUTOMÁTICAMENTE ---
+def reiniciar_cotizacion():
+    # Incrementa el folio +1
+    st.session_state.num_cotizacion_num += 1
+    # Reinicia las partidas a la partida inicial
+    st.session_state.partidas = [{"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 10.0, "gancho": 5.0, "piezas": 100, "precio_kg": 26.00}]
+    # Limpia el campo de cliente
+    if "input_cliente" in st.session_state:
+        st.session_state["input_cliente"] = "PÚBLICO GENERAL"
+    st.rerun()
+
 # --- FUNCIÓN PARA GENERAR EL PDF PROFESIONAL ---
 def generar_pdf_en_memoria(
     num_cot, cliente_nom, fecha_e, fecha_v, items, subtotal, iva, total, incluir_iva_val
@@ -298,8 +316,8 @@ st.markdown("### 🛠️ Panel de Control y Captura")
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    num_cotizacion = st.text_input("Número de Cotización", value="175")
-    cliente = st.text_input("Cliente", value="PÚBLICO GENERAL")
+    num_cotizacion = st.number_input("Número de Cotización", value=st.session_state.num_cotizacion_num, step=1, key="num_cotizacion_num")
+    cliente = st.text_input("Cliente", value="PÚBLICO GENERAL", key="input_cliente")
 with col2:
     fecha_exp = st.date_input("Fecha de Expedición", datetime.date(2026, 11, 15))
 with col3:
@@ -310,16 +328,18 @@ st.divider()
 # --- PARTIDAS ---
 st.subheader("📋 Especificaciones del Material")
 
-if "partidas" not in st.session_state:
-    st.session_state.partidas = [{"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 10.0, "gancho": 5.0, "piezas": 100, "precio_kg": 26.00}]
-
-col_b1, col_b2 = st.columns([1, 5])
+col_b1, col_b2, col_b3 = st.columns([1.5, 2, 3])
 with col_b1:
     if st.button("➕ Agregar Partida"):
         st.session_state.partidas.append({"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 15.0, "gancho": 5.0, "piezas": 50, "precio_kg": 26.00})
+        st.rerun()
 with col_b2:
     if st.button("🗑️ Eliminar última partida") and len(st.session_state.partidas) > 1:
         st.session_state.partidas.pop()
+        st.rerun()
+with col_b3:
+    if st.button("🔄 Nueva Cotización (Limpiar + Folio +1)", type="secondary"):
+        reiniciar_cotizacion()
 
 items_calculados = []
 subtotal_general = 0.0
@@ -444,16 +464,23 @@ with col_fin:
 st.markdown("<br><h4 style='text-align: center; color: #555;'>\"Estribos Bemon: El alma de tu concreto\"</h4>", unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- BOTÓN DE DESCARGA DIRECTA ---
+# --- ACCIONES Y DESCARGA ---
+col_down, col_rst = st.columns([2, 1])
+
 ruta_pdf, nombre_pdf = generar_pdf_en_memoria(
     num_cotizacion, cliente, fecha_exp, fecha_ven, items_calculados, subtotal_general, iva_general, gran_total, incluir_iva
 )
 
-with open(ruta_pdf, "rb") as archivo_pdf:
-    st.download_button(
-        label="📥 Descargar PDF Oficial de Alta Gama",
-        data=archivo_pdf,
-        file_name=nombre_pdf,
-        mime="application/pdf",
-        type="primary"
-    )
+with col_down:
+    with open(ruta_pdf, "rb") as archivo_pdf:
+        st.download_button(
+            label="📥 Descargar PDF Oficial de Alta Gama",
+            data=archivo_pdf,
+            file_name=nombre_pdf,
+            mime="application/pdf",
+            type="primary"
+        )
+
+with col_rst:
+    if st.button("🔄 Nueva Cotización (Limpiar + Folio +1)", help="Limpia la pantalla e incrementa +1 al número de cotización"):
+        reiniciar_cotizacion()
