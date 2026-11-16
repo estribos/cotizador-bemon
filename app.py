@@ -40,21 +40,20 @@ if not verificar_password():
     st.stop()
 
 # --- INICIALIZACIÓN DE ESTADOS GLOBAL DE LA SESIÓN ---
-if "num_cotizacion_num" not in st.session_state:
-    st.session_state.num_cotizacion_num = 175
+if "folio" not in st.session_state:
+    st.session_state.folio = 175
 
 if "partidas" not in st.session_state:
     st.session_state.partidas = [{"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 10.0, "gancho": 5.0, "piezas": 100, "precio_kg": 26.00}]
 
+if "cliente_input" not in st.session_state:
+    st.session_state.cliente_input = "PÚBLICO GENERAL"
+
 # --- FUNCIÓN PARA LIMPIAR PANTALLA E INCREMENTAR FOLIO AUTOMÁTICAMENTE ---
 def reiniciar_cotizacion():
-    # Incrementa el folio +1
-    st.session_state.num_cotizacion_num += 1
-    # Reinicia las partidas a la partida inicial
+    st.session_state.folio += 1  # Incrementa el folio +1
     st.session_state.partidas = [{"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 10.0, "gancho": 5.0, "piezas": 100, "precio_kg": 26.00}]
-    # Limpia el campo de cliente
-    if "input_cliente" in st.session_state:
-        st.session_state["input_cliente"] = "PÚBLICO GENERAL"
+    st.session_state.cliente_input = "PÚBLICO GENERAL"
     st.rerun()
 
 # --- FUNCIÓN PARA GENERAR EL PDF PROFESIONAL ---
@@ -316,8 +315,12 @@ st.markdown("### 🛠️ Panel de Control y Captura")
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    num_cotizacion = st.number_input("Número de Cotización", value=st.session_state.num_cotizacion_num, step=1, key="num_cotizacion_num")
-    cliente = st.text_input("Cliente", value="PÚBLICO GENERAL", key="input_cliente")
+    # Se lee directamente del estado de la sesión sin claves en conflicto
+    num_cotizacion = st.number_input("Número de Cotización", value=st.session_state.folio, step=1)
+    # Actualizamos el valor del folio si el usuario lo edita manualmente en el cuadro de texto
+    st.session_state.folio = int(num_cotizacion)
+    
+    cliente = st.text_input("Cliente", value=st.session_state.cliente_input, key="cliente_input")
 with col2:
     fecha_exp = st.date_input("Fecha de Expedición", datetime.date(2026, 11, 15))
 with col3:
@@ -430,7 +433,7 @@ with col_prev2:
         st.image(logo_encontrado_preview, width=200)
 
 st.markdown(f"""
-**Cotización:** #{num_cotizacion} &nbsp;&nbsp;|&nbsp;&nbsp; **Cliente:** {cliente}  
+**Cotización:** #{int(num_cotizacion)} &nbsp;&nbsp;|&nbsp;&nbsp; **Cliente:** {cliente}  
 **Fecha de Expedición:** {fecha_exp.strftime('%d/%m/%Y')} &nbsp;&nbsp;|&nbsp;&nbsp; **Vencimiento:** {fecha_ven.strftime('%d/%m/%Y')}
 """)
 
@@ -468,7 +471,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 col_down, col_rst = st.columns([2, 1])
 
 ruta_pdf, nombre_pdf = generar_pdf_en_memoria(
-    num_cotizacion, cliente, fecha_exp, fecha_ven, items_calculados, subtotal_general, iva_general, gran_total, incluir_iva
+    int(num_cotizacion), cliente, fecha_exp, fecha_ven, items_calculados, subtotal_general, iva_general, gran_total, incluir_iva
 )
 
 with col_down:
@@ -482,5 +485,5 @@ with col_down:
         )
 
 with col_rst:
-    if st.button("🔄 Nueva Cotización (Limpiar + Folio +1)", help="Limpia la pantalla e incrementa +1 al número de cotización"):
+    if st.button("🔄 Nueva Cotización (Limpiar + Folio +1)", type="secondary"):
         reiniciar_cotizacion()
