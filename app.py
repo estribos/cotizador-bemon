@@ -25,9 +25,9 @@ def verificar_password():
     st.markdown("## 🔐 Acceso Restringido")
     st.subheader("Estribos Bemon - Sistema Privado")
     
-    password_ingresada = st.text_input("Introduce la contraseña de acceso:", type="password")
+    password_ingresada = st.text_input("Introduce la contraseña de acceso:", type="password", key="pwd_input_login")
     
-    if st.button("Iniciar Sesión"):
+    if st.button("Iniciar Sesión", key="btn_login_access"):
         if password_ingresada == "bemon2026":
             st.session_state.password_correcta = True
             st.rerun()
@@ -50,7 +50,6 @@ if "partidas" not in st.session_state:
 def reiniciar_cotizacion():
     st.session_state.folio += 1  # Incrementa el folio +1
     st.session_state.partidas = [{"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 10.0, "gancho": 5.0, "piezas": 100, "precio_kg": 26.00}]
-    # Se elimina la clave del input de cliente para que se resetee sin error de widget
     if "cliente_input" in st.session_state:
         del st.session_state.cliente_input
     st.rerun()
@@ -303,8 +302,8 @@ st.markdown(
 
 # --- PANEL LATERAL ---
 st.sidebar.markdown("### ⚙️ Configuración Interna")
-peso_nominal = st.sidebar.number_input("Peso nominal alambrón (kg/m)", value=0.248, format="%.3f")
-incluir_iva = st.sidebar.checkbox("Incluir IVA (16%)", value=True)
+peso_nominal = st.sidebar.number_input("Peso nominal alambrón (kg/m)", value=0.248, format="%.3f", key="input_peso_nom")
+incluir_iva = st.sidebar.checkbox("Incluir IVA (16%)", value=True, key="chk_iva")
 
 st.sidebar.divider()
 st.sidebar.info("💡 Cada partida cuenta con su propio precio por kg de forma independiente.")
@@ -314,15 +313,14 @@ st.markdown("### 🛠️ Panel de Control y Captura")
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    num_cotizacion = st.number_input("Número de Cotización", value=st.session_state.folio, step=1)
+    num_cotizacion = st.number_input("Número de Cotización", value=st.session_state.folio, step=1, key="input_num_cot")
     st.session_state.folio = int(num_cotizacion)
     
-    # Se inicializa el campo de cliente de manera limpia con su key
     cliente = st.text_input("Cliente", value="PÚBLICO GENERAL", key="cliente_input")
 with col2:
-    fecha_exp = st.date_input("Fecha de Expedición", datetime.date(2026, 11, 15))
+    fecha_exp = st.date_input("Fecha de Expedición", datetime.date(2026, 11, 15), key="date_exp")
 with col3:
-    fecha_ven = st.date_input("Fecha de Vencimiento", datetime.date(2026, 11, 18))
+    fecha_ven = st.date_input("Fecha de Vencimiento", datetime.date(2026, 11, 18), key="date_ven")
 
 st.divider()
 
@@ -331,15 +329,15 @@ st.subheader("📋 Especificaciones del Material")
 
 col_b1, col_b2, col_b3 = st.columns([1.5, 2, 3])
 with col_b1:
-    if st.button("➕ Agregar Partida"):
+    if st.button("➕ Agregar Partida", key="btn_agregar_partida"):
         st.session_state.partidas.append({"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 15.0, "gancho": 5.0, "piezas": 50, "precio_kg": 26.00})
         st.rerun()
 with col_b2:
-    if st.button("🗑️ Eliminar última partida") and len(st.session_state.partidas) > 1:
+    if st.button("🗑️ Eliminar última partida", key="btn_eliminar_partida") and len(st.session_state.partidas) > 1:
         st.session_state.partidas.pop()
         st.rerun()
 with col_b3:
-    if st.button("🔄 Nueva Cotización (Limpiar + Folio +1)", type="secondary"):
+    if st.button("🔄 Nueva Cotización (Limpiar + Folio +1)", type="secondary", key="btn_nueva_cotizacion_principal"):
         reiniciar_cotizacion()
 
 items_calculados = []
@@ -371,15 +369,15 @@ for i, partida in enumerate(st.session_state.partidas):
     else: # Grapa de Alambrón
         c1, c2, c3, c4, c5 = st.columns(5)
         with c1:
-            partida["alto"] = st.selectbox(f"Altura Grapa (cm) #{i+1}", [15.0, 20.0, 25.0], key=f"alto_{i}")
+            partida["alto"] = st.selectbox(f"Altura Grapa (cm) #{i+1}", [15.0, 20.0, 25.0], key=f"g_alto_{i}")
         with c2:
-            partida["ancho"] = st.number_input(f"Base (cm) #{i+1}", value=float(partida.get("ancho", 10.0)), key=f"ancho_{i}")
+            partida["ancho"] = st.number_input(f"Base (cm) #{i+1}", value=float(partida.get("ancho", 10.0)), key=f"g_base_{i}")
         with c3:
-            partida["gancho"] = st.number_input(f"Patillas (cm) #{i+1}", value=float(partida.get("gancho", 8.0)), key=f"gancho_{i}")
+            partida["gancho"] = st.number_input(f"Patillas (cm) #{i+1}", value=float(partida.get("gancho", 8.0)), key=f"g_gancho_{i}")
         with c4:
-            partida["piezas"] = st.number_input(f"Piezas #{i+1}", value=int(partida["piezas"]), step=1, key=f"piezas_{i}")
+            partida["piezas"] = st.number_input(f"Piezas #{i+1}", value=int(partida["piezas"]), step=1, key=f"g_piezas_{i}")
         with c5:
-            partida["precio_kg"] = st.number_input(f"Precio/KG ($) #{i+1}", value=float(partida.get("precio_kg", 28.00)), step=0.5, key=f"precio_kg_{i}")
+            partida["precio_kg"] = st.number_input(f"Precio/KG ($) #{i+1}", value=float(partida.get("precio_kg", 28.00)), step=0.5, key=f"g_precio_{i}")
 
         desarrollo_m = (partida["ancho"] + partida["alto"] + partida["gancho"]) / 100.0
         ancho_i, alto_i = int(partida["ancho"]), int(partida["alto"])
@@ -479,9 +477,10 @@ with col_down:
             data=archivo_pdf,
             file_name=nombre_pdf,
             mime="application/pdf",
-            type="primary"
+            type="primary",
+            key="btn_descargar_pdf"
         )
 
 with col_rst:
-    if st.button("🔄 Nueva Cotización (Limpiar + Folio +1)", type="secondary"):
+    if st.button("🔄 Nueva Cotización (Limpiar + Folio +1)", type="secondary", key="btn_nueva_cotizacion_footer"):
         reiniciar_cotizacion()
