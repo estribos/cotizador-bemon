@@ -287,12 +287,11 @@ st.markdown(
 
 # --- PANEL LATERAL ---
 st.sidebar.markdown("### ⚙️ Configuración Interna")
-precio_kg = st.sidebar.number_input("Precio por kg ($ MXN)", value=26.00, format="%.2f")
 peso_nominal = st.sidebar.number_input("Peso nominal alambrón (kg/m)", value=0.248, format="%.3f")
 incluir_iva = st.sidebar.checkbox("Incluir IVA (16%)", value=True)
 
 st.sidebar.divider()
-st.sidebar.info("💡 Selecciona el producto y agrega las partidas necesarias.")
+st.sidebar.info("💡 Cada partida cuenta con su propio precio por kg de forma independiente.")
 
 # --- PANEL DE CONTROL ---
 st.markdown("### 🛠️ Panel de Control y Captura")
@@ -312,12 +311,12 @@ st.divider()
 st.subheader("📋 Especificaciones del Material")
 
 if "partidas" not in st.session_state:
-    st.session_state.partidas = [{"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 10.0, "gancho": 5.0, "piezas": 100}]
+    st.session_state.partidas = [{"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 10.0, "gancho": 5.0, "piezas": 100, "precio_kg": 26.00}]
 
 col_b1, col_b2 = st.columns([1, 5])
 with col_b1:
     if st.button("➕ Agregar Partida"):
-        st.session_state.partidas.append({"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 15.0, "gancho": 5.0, "piezas": 50})
+        st.session_state.partidas.append({"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 15.0, "gancho": 5.0, "piezas": 50, "precio_kg": 26.00})
 with col_b2:
     if st.button("🗑️ Eliminar última partida") and len(st.session_state.partidas) > 1:
         st.session_state.partidas.pop()
@@ -328,11 +327,10 @@ subtotal_general = 0.0
 for i, partida in enumerate(st.session_state.partidas):
     st.markdown(f"**Partida #{i+1}**")
     
-    # Selector de tipo por partida
     partida["tipo"] = st.selectbox(f"Tipo de Elemento #{i+1}", ["Estribo Cerrado", "Grapa de Alambrón"], key=f"tipo_{i}")
     
     if partida["tipo"] == "Estribo Cerrado":
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4, c5 = st.columns(5)
         with c1:
             partida["ancho"] = st.number_input(f"Ancho (cm) #{i+1}", value=float(partida.get("ancho", 10.0)), key=f"ancho_{i}")
         with c2:
@@ -341,6 +339,8 @@ for i, partida in enumerate(st.session_state.partidas):
             partida["gancho"] = st.number_input(f"Gancho (cm) #{i+1}", value=float(partida.get("gancho", 5.0)), key=f"gancho_{i}")
         with c4:
             partida["piezas"] = st.number_input(f"Piezas #{i+1}", value=int(partida["piezas"]), step=1, key=f"piezas_{i}")
+        with c5:
+            partida["precio_kg"] = st.number_input(f"Precio/KG ($) #{i+1}", value=float(partida.get("precio_kg", 26.00)), step=0.5, key=f"precio_kg_{i}")
 
         desarrollo_m = (2 * ((partida["ancho"] + partida["alto"]) / 100.0)) + (2 * (partida["gancho"] / 100.0))
         ancho_i, alto_i = int(partida["ancho"]), int(partida["alto"])
@@ -348,16 +348,17 @@ for i, partida in enumerate(st.session_state.partidas):
         descripcion_str = f"ESTRIBO DE ALAMBRÓN {ancho_i}X{alto_i} CM (1/4'', dobleces 135°)"
 
     else: # Grapa de Alambrón
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4, c5 = st.columns(5)
         with c1:
-            # Selector de alturas fijas (15, 20, 25)
             partida["alto"] = st.selectbox(f"Altura Grapa (cm) #{i+1}", [15.0, 20.0, 25.0], key=f"alto_{i}")
         with c2:
             partida["ancho"] = st.number_input(f"Base (cm) #{i+1}", value=float(partida.get("ancho", 10.0)), key=f"ancho_{i}")
         with c3:
-            partida["gancho"] = st.number_input(f"Patillas/Dobleces (cm) #{i+1}", value=float(partida.get("gancho", 8.0)), key=f"gancho_{i}")
+            partida["gancho"] = st.number_input(f"Patillas (cm) #{i+1}", value=float(partida.get("gancho", 8.0)), key=f"gancho_{i}")
         with c4:
             partida["piezas"] = st.number_input(f"Piezas #{i+1}", value=int(partida["piezas"]), step=1, key=f"piezas_{i}")
+        with c5:
+            partida["precio_kg"] = st.number_input(f"Precio/KG ($) #{i+1}", value=float(partida.get("precio_kg", 28.00)), step=0.5, key=f"precio_kg_{i}")
 
         desarrollo_m = (partida["ancho"] + partida["alto"] + partida["gancho"]) / 100.0
         ancho_i, alto_i = int(partida["ancho"]), int(partida["alto"])
@@ -366,7 +367,7 @@ for i, partida in enumerate(st.session_state.partidas):
 
     metros_totales = desarrollo_m * partida["piezas"]
     kilos_totales = metros_totales * peso_nominal
-    total_partida = kilos_totales * precio_kg
+    total_partida = kilos_totales * partida["precio_kg"]
 
     subtotal_general += total_partida
 
@@ -375,11 +376,11 @@ for i, partida in enumerate(st.session_state.partidas):
         "Cant. KG": round(kilos_totales, 2),
         "Piezas": int(partida["piezas"]),
         "Descripción": descripcion_str,
-        "P.U.": precio_kg,
+        "P.U.": partida["precio_kg"],
         "Total": round(total_partida, 2),
     })
     
-    st.markdown(f"*Resumen Parcial:* **{partida['piezas']} pzas** | Desarrollo: **{desarrollo_m:.2f} m** | **{kilos_totales:.2f} kg** | Subtotal: **$ {total_partida:,.2f} MXN**")
+    st.markdown(f"*Resumen Parcial:* **{partida['piezas']} pzas** | Desarrollo: **{desarrollo_m:.2f} m** | **{kilos_totales:.2f} kg** @ **${partida['precio_kg']:.2f}/kg** | Subtotal: **$ {total_partida:,.2f} MXN**")
     st.divider()
 
 iva_general = subtotal_general * 0.16 if incluir_iva else 0.0
