@@ -46,14 +46,13 @@ if "folio" not in st.session_state:
 if "partidas" not in st.session_state:
     st.session_state.partidas = [{"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 10.0, "gancho": 5.0, "piezas": 100, "precio_kg": 26.00}]
 
-if "cliente_input" not in st.session_state:
-    st.session_state.cliente_input = "PÚBLICO GENERAL"
-
 # --- FUNCIÓN PARA LIMPIAR PANTALLA E INCREMENTAR FOLIO AUTOMÁTICAMENTE ---
 def reiniciar_cotizacion():
     st.session_state.folio += 1  # Incrementa el folio +1
     st.session_state.partidas = [{"tipo": "Estribo Cerrado", "ancho": 10.0, "alto": 10.0, "gancho": 5.0, "piezas": 100, "precio_kg": 26.00}]
-    st.session_state.cliente_input = "PÚBLICO GENERAL"
+    # Se elimina la clave del input de cliente para que se resetee sin error de widget
+    if "cliente_input" in st.session_state:
+        del st.session_state.cliente_input
     st.rerun()
 
 # --- FUNCIÓN PARA GENERAR EL PDF PROFESIONAL ---
@@ -315,12 +314,11 @@ st.markdown("### 🛠️ Panel de Control y Captura")
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    # Se lee directamente del estado de la sesión sin claves en conflicto
     num_cotizacion = st.number_input("Número de Cotización", value=st.session_state.folio, step=1)
-    # Actualizamos el valor del folio si el usuario lo edita manualmente en el cuadro de texto
     st.session_state.folio = int(num_cotizacion)
     
-    cliente = st.text_input("Cliente", value=st.session_state.cliente_input, key="cliente_input")
+    # Se inicializa el campo de cliente de manera limpia con su key
+    cliente = st.text_input("Cliente", value="PÚBLICO GENERAL", key="cliente_input")
 with col2:
     fecha_exp = st.date_input("Fecha de Expedición", datetime.date(2026, 11, 15))
 with col3:
