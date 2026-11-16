@@ -1,3 +1,36 @@
+import streamlit as st
+
+# --- SISTEMA DE ACCESO PRIVADO ---
+def verificar_password():
+    if "password_correcta" not in st.session_state:
+        st.session_state.password_correcta = False
+
+    if st.session_state.password_correcta:
+        return True
+
+    # Pantalla de inicio de sesión
+    st.markdown("## 🔐 Acceso Restringido")
+    st.subheader("Estribos Bemon - Sistema Privado")
+    
+    password_ingresada = st.text_input("Introduce la contraseña de acceso:", type="password")
+    
+    if st.button("Iniciar Sesión"):
+        # CAMBIA AQUÍ TU CONTRASEÑA (puedes poner la que tú prefieras)
+        if password_ingresada == "bemon2026":
+            st.session_state.password_correcta = True
+            st.rerun()
+        else:
+            st.error("Contraseña incorrecta. Acceso denegado.")
+            
+    return False
+
+if not verificar_password():
+    st.stop()  # Detiene la app aquí si no han puesto la contraseña correcta
+
+# ==========================================
+# A PARTIR DE AQUÍ VA TODO TU CÓDIGO ACTUAL
+# =================*=========================
+
 import datetime
 import os
 import pandas as pd
